@@ -1,0 +1,146 @@
+ // Initialize Chess.js and Chessboard.js
+const game = new Chess();
+const board = Chessboard('board', {
+  draggable: true,
+  onDrop: handleMove,
+});
+
+// Timer variables
+let time = 300; // 5 minutes in seconds
+let increment = 5; // 5 seconds increment
+let timerInterval;
+
+// Start the timer
+function startTimer() {
+  timerInterval = setInterval(() => {
+    time--;
+    const minutes = Math.floor(time / 60);
+    const seconds = time % 60;
+    document.getElementById('timer').textContent = ${minutes}:${seconds.toString().padStart(2, '0')};
+    if (time <= 0) {
+      clearInterval(timerInterval);
+      alert("Time's up!");
+    }
+  }, 1000);
+}
+
+// Handle player move
+function handleMove(source, target) {
+  const move = game.move({ from: source, to: target, promotion: 'q' });
+  if (move === null) return 'snapback'; // Illegal move
+
+  board.position(game.fen());
+  if (game.in_checkmate()) {
+    alert("Checkmate! You lost.");
+    return;
+  }
+  if (game.in_check()) {
+    alert("Check!");
+  }
+
+  // Bot's turn
+  setTimeout(makeBotMove, 500);
+}
+
+// Bot makes a move
+function makeBotMove() {
+  const difficulty = document.getElementById('difficulty').value;
+  const stockfish = new Worker('stockfish.js'); // Include Stockfish.js
+  stockfish.postMessage('uci');
+  stockfish.postMessage(setoption name Skill Level value ${difficulty});
+  stockfish.postMessage('position fen ' + game.fen());
+  stockfish.postMessage('go depth 10');
+
+  stockfish.onmessage = (event) => {
+    if (event.data.startsWith('bestmove')) {
+      const move = event.data.split(' ')[1];
+      game.move(move);
+      board.position(game.fen());
+      if (game.in_checkmate()) {
+        alert("Checkmate! You won.");
+      }
+      if (game.in_check()) {
+        alert("Check!");
+      }
+      stockfish.terminate();
+    }
+  };
+}
+
+// Start the game
+startTimer();
+board.start();
+
+/
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chess Game</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.css">
+  <style>
+    #board {
+      width: 400px;
+      margin: 0 auto;
+    }
+    #timer {
+      text-align: center;
+      font-size: 24px;
+      margin: 20px;
+    }
+    #difficulty {
+      text-align: center;
+      margin: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div id="board"></div>
+  <div id="timer">5:00</div>
+  <div id="difficulty">
+    <label for="difficulty">Bot Difficulty:</label>
+    <select id="difficulty">
+      <option value="1">Easy</option>
+      <option value="2">Medium</option>
+      <option value="3">Hard</option>
+    </select>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
+[21:49, 20/2/2025] Fu2: <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chess Game</title>
+  <link rel="stylesheet" href="https://chessboardjs.com/css/chessboard-1.0.0.min.css">
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; }
+    #board { width: 400px; margin: 20px auto; }
+    #timer { font-size: 24px; margin: 10px; }
+    #status { font-size: 18px; margin: 10px; }
+  </style>
+</head>
+<body>
+  <h1>Chess Game</h1>
+  <div id="board"></div>
+  <div id="timer">Time: 5:00</div>
+  <div id="status">Game in progress</div>
+  <button id="startBtn">Start Game</button>
+  <select id="difficulty">
+    <option value="1">Easy</option>
+    <option value="5">Medium</option>
+    <option value="10">Hard</option>
+  </select>
+  <button id="resetBtn">Reset Game</button>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://chessboardjs.com/js/chessboard-1.0.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chess.js@0.11.0/chess.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
